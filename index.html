@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song List</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="controls">
+    <input
+      id="search"
+      type="search"
+      placeholder="Search song or artist…"
+      autocomplete="off"
+    >
+
+    <div id="tag-filters" class="tag-filters" aria-label="Tag filters"></div>
+
+    <div class="controls-footer">
+      <p id="result-count" class="result-count"></p>
+      <button id="clear-filters" class="clear-btn" type="button" hidden>Clear</button>
+    </div>
+  </section>
+
+  <main class="main">
+    <section id="song-list" class="song-list" aria-live="polite"></section>
+    <p id="status" class="status">Loading songs…</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

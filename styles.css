@@ -1,0 +1,241 @@
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --tag-bg: #f4f4f5;
+  --tag-on: #dbeafe;
+  --tag-on-border: #93c5fd;
+  --tag-badge: #eff6ff;
+  --tag-badge-border: #bfdbfe;
+  --tag-x: #fef2f2;
+  --tag-x-border: #fecaca;
+  --danger: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.35;
+  font-size: 14px;
+}
+
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.625rem 0.45rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+#search {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+#search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tag-filter {
+  border: 1px solid var(--border);
+  background: var(--tag-bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.tag-filter[aria-pressed="true"] {
+  background: var(--tag-on);
+  border-color: var(--tag-on-border);
+  color: #1d4ed8;
+}
+
+.controls-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.1rem;
+}
+
+.result-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.main {
+  padding: 0.35rem 0.625rem 0.75rem;
+}
+
+.song-list {
+  display: grid;
+  gap: 0;
+}
+
+.song-card {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.song-card:last-child {
+  border-bottom: none;
+}
+
+.song-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.35rem;
+  row-gap: 0.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.tag-row {
+  margin-bottom: 0.25rem;
+}
+
+.meta-row {
+  margin-bottom: 0.25rem;
+}
+
+.song-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.song-artist {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.song-artist::before {
+  content: "·";
+  margin-right: 0.35rem;
+  color: #d4d4d8;
+}
+
+.meta-row,
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.meta-chip {
+  font-size: 0.65rem;
+  color: var(--muted);
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.08rem 0.35rem;
+}
+
+.meta-chip strong {
+  color: #52525b;
+  font-weight: 600;
+}
+
+.lyrics-toggle {
+  cursor: pointer;
+  font: inherit;
+}
+
+.lyrics-toggle.is-open {
+  background: var(--tag-on);
+  border-color: var(--tag-on-border);
+  color: #1d4ed8;
+}
+
+.lyrics-panel {
+  margin: 0.2rem 0 0.3rem;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+
+.lyrics-panel[hidden] {
+  display: none;
+}
+
+.song-tag {
+  font-size: 0.65rem;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 0.08rem 0.35rem;
+  background: var(--tag-badge);
+  border: 1px solid var(--tag-badge-border);
+  color: #1e40af;
+}
+
+.song-tag.is-x {
+  background: var(--tag-x);
+  border-color: var(--tag-x-border);
+  color: #b91c1c;
+}
+
+.status {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 1.25rem 0.5rem;
+  font-size: 0.8rem;
+}
