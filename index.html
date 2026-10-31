@@ -7,26 +7,62 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <section class="controls">
-    <input
-      id="search"
-      type="search"
-      placeholder="Search song or artist…"
-      autocomplete="off"
-    >
+  <div id="page-a" class="page">
+    <header class="site-header">
+      <div class="logo" aria-label="Song List">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#e11d48" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+    </header>
 
-    <div id="tag-filters" class="tag-filters" aria-label="Tag filters"></div>
+    <section class="controls">
+      <div class="search-wrap">
+        <input
+          id="search"
+          type="search"
+          placeholder="Search song or artist…"
+          autocomplete="off"
+        >
+        <div id="search-hints" class="search-hints" hidden></div>
+      </div>
 
-    <div class="controls-footer">
-      <p id="result-count" class="result-count"></p>
-      <button id="clear-filters" class="clear-btn" type="button" hidden>Clear</button>
-    </div>
-  </section>
+      <div id="tag-filters" class="tag-filters" aria-label="Tag filters"></div>
 
-  <main class="main">
-    <section id="song-list" class="song-list" aria-live="polite"></section>
-    <p id="status" class="status">Loading songs…</p>
-  </main>
+      <div class="controls-footer">
+        <p id="result-count" class="result-count"></p>
+        <button id="clear-filters" class="clear-btn" type="button" hidden>Clear</button>
+        <div class="sort-wrap">
+          <button id="sort-btn" class="sort-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Sort">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M8 16H4l6 6V2H8v14zm6-14v20h2V8h4l-6-6z"/>
+            </svg>
+          </button>
+          <div id="sort-menu" class="sort-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-sort="time">時間</button>
+            <button type="button" role="menuitem" data-sort="chars">字數</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="main">
+      <section id="song-list" class="song-list" aria-live="polite"></section>
+      <p id="status" class="status">Loading songs…</p>
+    </main>
+  </div>
+
+  <div id="page-b" class="page" hidden>
+    <main class="main names-main">
+      <div id="name-list" class="name-list tag-filters"></div>
+      <p id="names-status" class="status">Loading names…</p>
+    </main>
+  </div>
+
+  <button id="fab-ear" class="fab" type="button" aria-label="Open names page">👂</button>
+  <button id="fab-mic" class="fab" type="button" hidden aria-label="Back to songs">🎤</button>
+
+  <div id="toast" class="toast" hidden>Copied</div>
 
   <script src="app.js"></script>
 </body>
