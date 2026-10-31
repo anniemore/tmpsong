@@ -100,12 +100,24 @@ function flattenNames(table) {
   const colCount = table.cols.length;
   const collected = [];
 
-  for (let col = 0; col < colCount; col++) {
-    for (const row of table.rows) {
-      const value = cellValue(row.c?.[col]);
-      if (value) collected.push(value);
+    // 1. Extract names from column labels
+    for (const col of table.cols || []) {
+        if (col.label) {
+            const names = col.label.trim().split(/\s+/);
+            collected.push(...names);
+        }
     }
-  }
+
+    // 2. Extract names from row cells
+    for (const row of table.rows || []) {
+        for (const cell of row.c || []) {
+            const value = cellValue(cell);
+
+            if (value && typeof value === "string") {
+                collected.push(value.trim());
+            }
+        }
+    }
 
   return collected;
 }
