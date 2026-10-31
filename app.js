@@ -97,26 +97,27 @@ function normalizeSongs(table) {
 }
 
 function flattenNames(table) {
+  const colCount = table.cols.length;
   const collected = [];
 
-  // 1. Extract each column label as one item
-  for (const col of table.cols || []) {
-    const value = col.label?.trim();
-    if (value) {
-      collected.push(value);
+    // 1. Extract names from column labels
+    for (const col of table.cols || []) {
+        if (col.label) {
+            const names = col.label.trim().split(/\s+/);
+            collected.push(...names);
+        }
     }
-  }
 
-  // 2. Extract each row cell as one item
-  for (const row of table.rows || []) {
-    for (const cell of row.c || []) {
-      const value = cellValue(cell);
+    // 2. Extract names from row cells
+    for (const row of table.rows || []) {
+        for (const cell of row.c || []) {
+            const value = cellValue(cell);
 
-      if (value) {
-        collected.push(value);
-      }
+            if (value && typeof value === "string") {
+                collected.push(value.trim());
+            }
+        }
     }
-  }
 
   return collected;
 }
@@ -367,7 +368,7 @@ function updateSortMenu() {
 }
 
 function renderNames() {
-  nameListEl.innerHTML = "";
+  nameListEl.innerHTML = "v6";
   names.forEach((name) => {
     const chip = document.createElement("button");
     chip.type = "button";
