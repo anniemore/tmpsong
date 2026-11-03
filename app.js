@@ -97,27 +97,17 @@ function normalizeSongs(table) {
 }
 
 function flattenNames(table) {
-  const colCount = table.cols.length;
+  const colCount = (table.cols || []).length;
   const collected = [];
 
-    // 1. Extract names from column labels
-    for (const col of table.cols || []) {
-        if (col.label) {
-            const names = col.label.trim().split(/\s+/);
-            collected.push(...names);
-        }
-    }
-
-    // 2. Extract names from row cells
+  for (let colIndex = 0; colIndex < colCount; colIndex++) {
     for (const row of table.rows || []) {
-        for (const cell of row.c || []) {
-            const value = cellValue(cell);
-
-            if (value && typeof value === "string") {
-                collected.push(value.trim());
-            }
-        }
+      const value = cellValue(row.c?.[colIndex]);
+      if (value) {
+        collected.push({ name: value, col: colIndex});
+      }
     }
+  }
 
   return collected;
 }
@@ -368,8 +358,8 @@ function updateSortMenu() {
 }
 
 function renderNames() {
-  nameListEl.innerHTML = "v6";
-  names.forEach((name) => {
+  nameListEl.innerHTML = "v7";
+  names.forEach(({name, col }) => {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "name-chip";
@@ -411,7 +401,11 @@ function setPage(page) {
   fabMic.hidden = !isB;
   const hash = isB ? "#b" : "#a";
   if (location.hash !== hash) {
-    history.replaceState(null, "", hash);
+    try {
+      history.replaceState(null, "", hash);
+    } catch {
+      // Ignored in sandboxed origins
+    }
   }
   if (isB && !namesLoaded) {
     loadNames();
@@ -431,15 +425,64 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-async function loadSongs() {
+let jsonpCounter = 0;
+
+function fetchSheetJsonp(gid, headers) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `__gvizCallback_${Date.now()}_$(++jsonpCounter}`;
+    const script = document.createElement("script");
+    const tqx = `out:json;responseHandler:${callbackName}`;
+    const gidParam = gid ? `&gid=${encodeURIComponent(gid)}` : "";
+    const headersParam = headers != null ? `&headers=${encodeURIComponent(headers)}`: "";
+    script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(tqx)}${gidParam}${headersParam}`;
+
+    const cleanup = () => {
+      delete window[callbackName];
+      script.remove();
+    };
+
+    window[callbackName] = (data) => {
+      cleanup();
+      if (data?status === "error") {
+        reject(new Error(data.errors?.[0]?.detaield_message || "Sheet query failed"));
+        return;
+      }
+      resolve(data.table);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject (new Error("Failed to load sheet via JSONP"));
+    };
+
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchSheetTable(gid, headers) {
+  if (window.origin === "null") {
+    return fetchSheetJsonp(gid, headers);
+  }
+  const gidParam = gid ? `&gid=${encodeURIComponent(gid)}` : "";
+  const headersParam = headers != null ? `&headers=${encodeURIComponent(headers)}` : "";
+  const url = `${SHEET_URL}&{gidParam}${headersParam}`;
   try {
-    const response = await fetch(SHEET_URL);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to load sheet (${response.status})`);
     }
 
     const text = await response.text();
     const data = parseGoogleSheetResponse(text);
+    return data.table;
+  } catch {
+    return fetchSheetJsonp(gid, headers);
+  }
+}
+
+async function loadSongs() {
+  try {
+    const table = await fetchSheetTable();
     songs = normalizeSongs(data.table);
 
     statusEl.hidden = true;
@@ -457,14 +500,8 @@ async function loadNames() {
   namesStatusEl.classList.remove("error");
 
   try {
-    const response = await fetch(NAMES_SHEET_URL);
-    if (!response.ok) {
-      throw new Error(`Failed to load sheet (${response.status})`);
-    }
-
-    const text = await response.text();
-    const data = parseGoogleSheetResponse(text);
-    names = flattenNames(data.table);
+    const table = await fetchSheetTable(NAMES_SHEET_GID, 0);
+    names = flattenNames(table);
     namesLoaded = true;
     namesStatusEl.hidden = true;
     renderNames();
