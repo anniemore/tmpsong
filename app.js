@@ -104,7 +104,7 @@ function flattenNames(table) {
     for (const row of table.rows || []) {
       const value = cellValue(row.c?.[colIndex]);
       if (value) {
-        collected.push({ name: value, col: colIndex});
+        collected.push({ name: value, col: colIndex });
       }
     }
   }
@@ -359,10 +359,11 @@ function updateSortMenu() {
 
 function renderNames() {
   nameListEl.innerHTML = "v7";
-  names.forEach(({name, col }) => {
+  names.forEach(({ name, col }) => {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "name-chip";
+    chip.dataset.col = String(col % 8);
     chip.textContent = name;
     chip.addEventListener("click", () => copyText(name));
     nameListEl.appendChild(chip);
@@ -429,11 +430,11 @@ let jsonpCounter = 0;
 
 function fetchSheetJsonp(gid, headers) {
   return new Promise((resolve, reject) => {
-    const callbackName = `__gvizCallback_${Date.now()}_$(++jsonpCounter}`;
+    const callbackName = `__gvizCallback_${Date.now()}_${++jsonpCounter}`;
     const script = document.createElement("script");
     const tqx = `out:json;responseHandler:${callbackName}`;
     const gidParam = gid ? `&gid=${encodeURIComponent(gid)}` : "";
-    const headersParam = headers != null ? `&headers=${encodeURIComponent(headers)}`: "";
+    const headersParam = headers != null ? `&headers=${encodeURIComponent(headers)}` : "";
     script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(tqx)}${gidParam}${headersParam}`;
 
     const cleanup = () => {
@@ -443,8 +444,8 @@ function fetchSheetJsonp(gid, headers) {
 
     window[callbackName] = (data) => {
       cleanup();
-      if (data?status === "error") {
-        reject(new Error(data.errors?.[0]?.detaield_message || "Sheet query failed"));
+      if (data?.status === "error") {
+        reject(new Error(data.errors?.[0]?.detailed_message || "Sheet query failed"));
         return;
       }
       resolve(data.table);
@@ -452,7 +453,7 @@ function fetchSheetJsonp(gid, headers) {
 
     script.onerror = () => {
       cleanup();
-      reject (new Error("Failed to load sheet via JSONP"));
+      reject(new Error("Failed to load sheet via JSONP"));
     };
 
     document.head.appendChild(script);
@@ -465,7 +466,7 @@ async function fetchSheetTable(gid, headers) {
   }
   const gidParam = gid ? `&gid=${encodeURIComponent(gid)}` : "";
   const headersParam = headers != null ? `&headers=${encodeURIComponent(headers)}` : "";
-  const url = `${SHEET_URL}&{gidParam}${headersParam}`;
+  const url = `${SHEET_URL}${gidParam}${headersParam}`;
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -483,7 +484,7 @@ async function fetchSheetTable(gid, headers) {
 async function loadSongs() {
   try {
     const table = await fetchSheetTable();
-    songs = normalizeSongs(data.table);
+    songs = normalizeSongs(table);
 
     statusEl.hidden = true;
     renderTagFilters();
