@@ -3,7 +3,7 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq
 const NAMES_SHEET_GID = "2045842481";
 const NAMES_SHEET_URL = `${SHEET_URL}&gid=${NAMES_SHEET_GID}`;
 
-const META_COLUMNS = new Set(["Song", "Artist", "Year", "No", "Note", "Lyrics"]);
+const META_COLUMNS = new Set(["Song", "Artist", "Year", "No", "Note", "Lyrics", "Link"]);
 
 const pageA = document.getElementById("page-a");
 const pageB = document.getElementById("page-b");
@@ -21,6 +21,12 @@ const sortMenu = document.getElementById("sort-menu");
 const nameListEl = document.getElementById("name-list");
 const namesStatusEl = document.getElementById("names-status");
 const toastEl = document.getElementById("toast");
+const linkSheetEl = document.getElementById("link-sheet");
+const linkSheetTitleEl = document.getElementById("link-sheet-title");
+const linkSheetExternalEl = document.getElementById("link-sheet-external");
+const linkSheetCloseBtn = document.getElementById("link-sheet-close");
+const linkSheetLoadingEl = document.getElementById("link-sheet-loading");
+const linkSheetFrameEl = document.getElementById("link-sheet-frame");
 
 let columns = [];
 let tagColumns = [];
@@ -31,6 +37,7 @@ const activeTagFilters = new Set();
 let selectedArtist = "";
 let sortMode = "time";
 let toastTimer = 0;
+let activeSheetUrl = "";
 
 const strokeCollator = new Intl.Collator("zh-Hant", {
   collation: "stroke",
@@ -90,6 +97,7 @@ function normalizeSongs(table) {
         No: values.No,
         Note: values.Note,
         Lyrics: values.Lyrics,
+        Link: values.Link,
       },
       tags,
     };
@@ -97,8 +105,8 @@ function normalizeSongs(table) {
 }
 
 function flattenNames(table) {
-  const colCount = (table.cols || []).length;
   const collected = [];
+  const colCount = (table.cols || []).length;
 
   for (let colIndex = 0; colIndex < colCount; colIndex++) {
     for (const row of table.rows || []) {
@@ -288,7 +296,7 @@ function renderSongCard(song) {
     lyricsPanel = document.createElement("div");
     lyricsPanel.className = "lyrics-panel";
     lyricsPanel.hidden = true;
-    lyricsPanel.appendChild(renderTextWithLinks(song.meta.Lyrics));
+    lyricsPanel.textContent = song.meta.Lyrics;
 
     lyricsBtn.addEventListener("click", () => {
       const opening = lyricsPanel.hidden;
@@ -299,6 +307,33 @@ function renderSongCard(song) {
 
     tagRow.appendChild(lyricsBtn);
   }
+
+  const links = extractUrls(song.meta.Link);
+  links.forEach((url, idx) => {
+    const linkChip = document.createElement("a");
+    linkChip.className = "link-chip";
+    linkChip.href = url;
+    linkChip.target = "_blank";
+    linkChip.rel = "noopener noreferrer";
+    linkChip.dataset.url = url;
+    if (activeSheetUrl === url) {
+      linkChip.classList.add("is-active");
+    }
+    const labelText = links.length > 1 ? `Link ${idx + 1}` : "Link";
+    linkChip.setAttribute("aria-label", labelText);
+    linkChip.title = url;
+    linkChip.innerHTML =
+      `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>` +
+      (links.length > 1 ? `<span>${idx + 1}</span>` : "");
+    linkChip.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      openLinkSheet(url, song.song);
+    });
+    tagRow.appendChild(linkChip);
+  });
 
   song.tags.forEach((tag) => {
     const badge = document.createElement("span");
@@ -405,7 +440,7 @@ function setPage(page) {
     try {
       history.replaceState(null, "", hash);
     } catch {
-      // Ignored in sandboxed origins
+      // Ignored in sandboxed origins (e.g. x20web)
     }
   }
   if (isB && !namesLoaded) {
@@ -426,39 +461,41 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function renderTextWithLinks(text) {
-  const fragment = document.createDocumentFragment();
-  const urlPattern = /https?:\/\/[^\s<>"'，。；：！？、（）【】「」『』《》]+/g;
-  let lastIndex = 0;
+function syncActiveLinkChips() {
+  songListEl.querySelectorAll(".link-chip").forEach((chip) => {
+    chip.classList.toggle("is-active", activeSheetUrl !== "" && chip.dataset.url === activeSheetUrl);
+  });
+}
 
-  for (const match of text.matchAll(urlPattern)) {
-    const start = match.index;
-    const raw = match[0];
-    const url = raw.replace(/[.,;:!?]+$/, "");
-    const trailing = raw.slice(url.length);
-
-    if (start > lastIndex) {
-      fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
-    }
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.textContent = url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    fragment.appendChild(link);
-
-    if (trailing) {
-      fragment.appendChild(document.createTextNode(trailing));
-    }
-    lastIndex = start + raw.length;
+function openLinkSheet(url, title) {
+  linkSheetTitleEl.textContent = title ? `${title} · ${url}` : url;
+  linkSheetTitleEl.title = url;
+  linkSheetExternalEl.href = url;
+  const sameUrl = !linkSheetEl.hidden && activeSheetUrl === url;
+  activeSheetUrl = url;
+  if (!sameUrl) {
+    linkSheetLoadingEl.hidden = false;
+    linkSheetFrameEl.src = url;
   }
+  linkSheetEl.hidden = false;
+  document.body.classList.add("sheet-open");
+  syncActiveLinkChips();
+}
 
-  if (lastIndex < text.length) {
-    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-  }
+function closeLinkSheet() {
+  if (linkSheetEl.hidden) return;
+  linkSheetEl.hidden = true;
+  document.body.classList.remove("sheet-open");
+  linkSheetFrameEl.src = "about:blank";
+  linkSheetLoadingEl.hidden = true;
+  activeSheetUrl = "";
+  syncActiveLinkChips();
+}
 
-  return fragment;
+function extractUrls(text) {
+  if (!text) return [];
+  const matches = text.match(/https?:\/\/[^\s<>"'，。；：！？、（）【】「」『』《》]+/g) || [];
+  return matches.map((raw) => raw.replace(/[.,;:!?]+$/, "")).filter(Boolean);
 }
 
 let jsonpCounter = 0;
@@ -507,7 +544,6 @@ async function fetchSheetTable(gid, headers) {
     if (!response.ok) {
       throw new Error(`Failed to load sheet (${response.status})`);
     }
-
     const text = await response.text();
     const data = parseGoogleSheetResponse(text);
     return data.table;
@@ -587,6 +623,18 @@ document.addEventListener("click", (event) => {
 fabEar.addEventListener("click", () => setPage("b"));
 fabMic.addEventListener("click", () => setPage("a"));
 window.addEventListener("hashchange", () => setPage(pageFromHash()));
+
+linkSheetCloseBtn.addEventListener("click", closeLinkSheet);
+linkSheetFrameEl.addEventListener("load", () => {
+  if (!linkSheetEl.hidden) {
+    linkSheetLoadingEl.hidden = true;
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeLinkSheet();
+  }
+});
 
 setPage(pageFromHash());
 loadSongs();
