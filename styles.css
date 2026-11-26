@@ -504,8 +504,8 @@ body {
 }
 
 body.sheet-open .main {
-  padding-bottom: calc(75vh + 1.5rem);
-  padding-bottom: calc(75dvh + 1.5rem);
+  padding-bottom: calc(65vh + 1.5rem);
+  padding-bottom: calc(65dvh + 1.5rem);
 }
 
 .link-sheet {
@@ -514,8 +514,8 @@ body.sheet-open .main {
   right: 0;
   bottom: 0;
   z-index: 70;
-  height: 75vh;
-  height: 75dvh;
+  height: 65vh;
+  height: 65dvh;
   min-height: 220px;
   background: var(--surface);
   border-top: 1px solid var(--border);
