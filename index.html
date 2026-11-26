@@ -57,7 +57,36 @@
   <button id="fab-mic" class="fab" type="button" hidden aria-label="Back to songs">🎤</button>
 
   <div id="toast" class="toast" hidden>Copied</div>
-
+  <section id="link-sheet" class="link-sheet" aria-label="Link preview" hidden>
+    <div class="link-sheet-header">
+      <span id="link-sheet-title" class="link-sheet-title"></span>
+      <a
+        id="link-sheet-external"
+        class="link-sheet-btn"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="新分頁開啟"
+        aria-label="Open in new tab"
+      >↗</a>
+      <button
+        id="link-sheet-close"
+        class="link-sheet-btn"
+        type="button"
+        title="關閉"
+        aria-label="Close preview"
+      >✕</button>
+    </div>
+    <div class="link-sheet-body">
+      <div id="link-sheet-loading" class="link-sheet-loading" hidden>Loading…</div>
+      <iframe
+        id="link-sheet-frame"
+        class="link-sheet-frame"
+        title="Link preview"
+        referrerpolicy="no-referrer"
+      ></iframe>
+    </div>
+  </section>
   <script src="app.js"></script>
 </body>
 </html>
