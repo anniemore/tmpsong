@@ -288,7 +288,7 @@ function renderSongCard(song) {
     lyricsPanel = document.createElement("div");
     lyricsPanel.className = "lyrics-panel";
     lyricsPanel.hidden = true;
-    lyricsPanel.textContent = song.meta.Lyrics;
+    lyricsPanel.appendChild(renderTextWithLinks(song.meta.Lyrics));
 
     lyricsBtn.addEventListener("click", () => {
       const opening = lyricsPanel.hidden;
@@ -424,6 +424,41 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderTextWithLinks(text) {
+  const fragment = document.createDocumentFragment();
+  const urlPattern = /https?:\/\/[^\s<>"'，。；：！？、（）【】「」『』《》]+/g;
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(urlPattern)) {
+    const start = match.index;
+    const raw = match[0];
+    const url = raw.replace(/[.,;:!?]+$/, "");
+    const trailing = raw.slice(url.length);
+
+    if (start > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+    }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.textContent = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    fragment.appendChild(link);
+
+    if (trailing) {
+      fragment.appendChild(document.createTextNode(trailing));
+    }
+    lastIndex = start + raw.length;
+  }
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  return fragment;
 }
 
 let jsonpCounter = 0;
